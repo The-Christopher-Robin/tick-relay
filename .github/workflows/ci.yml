@@ -1,0 +1,50 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        cc: [gcc, clang]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential clang python3
+
+      - name: build (release flags)
+        env:
+          CC: ${{ matrix.cc }}
+        run: make release
+
+      - name: unit tests
+        env:
+          CC: ${{ matrix.cc }}
+        run: make test
+
+      - name: asan + ubsan
+        env:
+          CC: ${{ matrix.cc }}
+        run: make asan
+
+      - name: end-to-end replay smoke
+        run: |
+          set -e
+          ./tick-relay --port 19001 --workers 2 --duration-ms 3000 &
+          SERVER_PID=$!
+          # Wait for the server to bind.
+          for _ in $(seq 1 50); do
+            (exec 3<>/dev/tcp/127.0.0.1/19001) 2>/dev/null && { exec 3<&-; exec 3>&-; break; }
+            sleep 0.1
+          done
+          python3 tools/replay.py --host 127.0.0.1 --port 19001 --messages 50000
+          wait $SERVER_PID
