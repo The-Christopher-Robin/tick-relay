@@ -27,11 +27,11 @@ $(OBJDIR)/%.o: src/%.c | $(OBJDIR)
 $(OBJDIR):
 	@mkdir -p $(OBJDIR)
 
-$(OBJDIR)/test_ring: tests/test_ring.c $(OBJDIR)/ring.o $(OBJDIR)/feed.o | $(OBJDIR)
-	$(CC) $(CFLAGS) -o $@ tests/test_ring.c $(OBJDIR)/ring.o $(OBJDIR)/feed.o $(LDFLAGS)
+$(OBJDIR)/test_ring: tests/test_ring.c src/ring.c src/feed.c | $(OBJDIR)
+	$(CC) $(CFLAGS) -o $@ tests/test_ring.c src/ring.c src/feed.c $(LDFLAGS)
 
-$(OBJDIR)/test_histogram: tests/test_histogram.c $(OBJDIR)/histogram.o | $(OBJDIR)
-	$(CC) $(CFLAGS) -o $@ tests/test_histogram.c $(OBJDIR)/histogram.o $(LDFLAGS)
+$(OBJDIR)/test_histogram: tests/test_histogram.c src/histogram.c | $(OBJDIR)
+	$(CC) $(CFLAGS) -o $@ tests/test_histogram.c src/histogram.c $(LDFLAGS)
 
 test: $(TEST_BINS)
 	@set -e; for t in $(TEST_BINS); do echo "-- running $$t"; ./$$t; done
